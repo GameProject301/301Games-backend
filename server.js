@@ -98,6 +98,85 @@ server.get("*", (req, res) => {
 })
 
 
+//post function ashar
+server.post ("/games",addHandler);
+
+async function addHandler(req,res) {
+    const {name,image,plateforms,rate} = req.body; 
+    await Game.create({
+      name:name,
+      image:image,
+      plateforms:plateforms,
+      rate:rate,
+        
+    });
+  
+    Game.find({},(err,result)=>{
+        if(err)
+        {
+            console.log(err);
+        }
+        else
+        {
+          
+            res.send(result);
+        }
+    })
+  }
+
+
+  //delete function ashar
+  server.delete('/games/:id',deleteHandler);
+ 
+  function deleteHandler(req,res) { 
+  const gameId = req.params.id;
+ 
+  Game.deleteOne({_id:gameId},(err,result)=>{
+      
+    Game.find({_id:gameId},(err,result)=>{ 
+          if(err)
+          {
+            console.log(err);
+          }
+          else
+          {
+             
+            res.send(result);
+          }
+      })
+
+  })
+  
+}
+
+
+//put function ashar
+server.put('/games/:id',updateHandler);
+
+function updateHandler(req, res){
+  const id = req.params.id;
+  const {name,image,plateforms,rate} = req.body;
+
+  Game.findByIdAndUpdate(id, {name,image,plateforms,rate}, (err, result) => {
+    if(err){
+      console.log(err);
+    } else {
+        Game.find({},(err,result)=>{ 
+        if(err)
+        {
+            console.log(err);
+        }
+        else
+        {
+            res.send(result);
+        }
+    })
+    }
+  })
+
+}
+
+
 
 
 server.listen(PORT, () => console.log(`listening on ${PORT}`));
