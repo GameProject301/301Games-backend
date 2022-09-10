@@ -57,9 +57,7 @@ async function gamesHandler(req, res) {
             console.log(err)
         }
         else {
-            // let result = await axios.get(url);
-            // const gamesArr = result.data.results.map(item => new Games(item));
-            // res.send(gamesArr);
+   
             axios
                 .get(url)
                 .then((result) => {
@@ -93,32 +91,33 @@ class Games {
 
 
 
-server.get("*", (req, res) => {
-    res.send("Error 404:page not found ");
-})
 
+// http://localhost:3000/games
 
 //post function ashar
 server.post ("/games",addHandler);
 
 async function addHandler(req,res) {
-    const {name,image,plateforms,rate} = req.body; 
+    console.log("test Add")
+    const {name,description,rate,email,platform} = req.body; 
     await Game.create({
+    
       name:name,
-      image:image,
-      plateforms:plateforms,
+         description:description,
       rate:rate,
-        
+      email:email,
+      platform:platform
     });
   
     Game.find({},(err,result)=>{
         if(err)
         {
+            console.log("false")
             console.log(err);
         }
         else
         {
-          
+          console.log(result)
             res.send(result);
         }
     })
@@ -129,11 +128,12 @@ async function addHandler(req,res) {
   server.delete('/games/:id',deleteHandler);
  
   function deleteHandler(req,res) { 
+    console.log("test delete ")
   const gameId = req.params.id;
  
   Game.deleteOne({_id:gameId},(err,result)=>{
       
-    Game.find({_id:gameId},(err,result)=>{ 
+    Game.find({},(err,result)=>{ 
           if(err)
           {
             console.log(err);
@@ -154,10 +154,12 @@ async function addHandler(req,res) {
 server.put('/games/:id',updateHandler);
 
 function updateHandler(req, res){
+    console.log("test update")
   const id = req.params.id;
-  const {name,image,plateforms,rate} = req.body;
+  const {name,description,rate,email,platform} = req.body; 
 
-  Game.findByIdAndUpdate(id, {name,image,plateforms,rate}, (err, result) => {
+
+  Game.findByIdAndUpdate(id, {name,description,rate,email,platform}, (err, result) => {
     if(err){
       console.log(err);
     } else {
@@ -177,6 +179,8 @@ function updateHandler(req, res){
 }
 
 
-
+server.get("*", (req, res) => {
+    res.send("Error 404:page not found ");
+})
 
 server.listen(PORT, () => console.log(`listening on ${PORT}`));
