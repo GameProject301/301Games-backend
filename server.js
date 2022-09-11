@@ -12,16 +12,16 @@ const PORT = process.env.PORT || 3001;
 const mongoose = require('mongoose');
 
 
-
 mongoose.connect('mongodb://abdallah:0000@ac-1odpauc-shard-00-00.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-01.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-02.acyygth.mongodb.net:27017/?ssl=true&replicaSet=atlas-mp85cf-shard-0&authSource=admin&retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
 
 // schema for Games
 const GameSchema = new mongoose.Schema({
     name: String,
-    description: String,
+    image: String,
+    platforms: String,
     rate: String,
-    email: String,
-    platform: String
+    Genres: String,
+    email:String
 });
 const GameModel = mongoose.model('Game', GameSchema);
 
@@ -58,14 +58,17 @@ async function seedData() {
 //function 
 async function gamesHandler(req, res) {
     // let search =req.query.search
+    
     let parent_platforms=req.query.parent_platforms;
+   
     let url = `https://api.rawg.io/api/games?parent_platforms=${parent_platforms}&key=43fd5749eb674151bca70973fe88b05a`;
+  
     GameModel.find({}, (err, result) => {
         if (err) {
             console.log(err)
         }
         else {
-
+                
             axios
                 .get(url)
                 .then((result) => {
@@ -92,13 +95,19 @@ class Games {
     constructor(item) {
         this.name = item.name;
         this.image = item.background_image;
-        this.platforms = item.platforms.map(x => x.platform.name);
+        this.parent_platforms = item.parent_platforms.map(x => x.platform.name);
         this.rate = item.rating;
+        this.genres= item.genres.map(x => x.name);
     }
 }
 
 
 
+// image: String,
+// platforms: String,
+// rate: String,
+// Genres: String,
+// email:String
 
 // http://localhost:3000/games
 
@@ -107,14 +116,15 @@ server.post("/games", addHandler);
 
 async function addHandler(req, res) {
     console.log("test Add")
-    const { name, description, rate, email, platform } = req.body;
+    const { name, image, platforms, rate, Genres,email } = req.body;
     await GameModel.create({
 
         name: name,
-        description: description,
+        image: image,
+        platforms: platforms,
         rate: rate,
-        email: email,
-        platform: platform
+        Genres: Genres,
+        email:email
     });
 
     GameModel.find({}, (err, result) => {
@@ -160,10 +170,10 @@ server.put('/games/:id', updateHandler);
 function updateHandler(req, res) {
     console.log("test update")
     const id = req.params.id;
-    const { name, description, rate, email, platform } = req.body;
+    const { name, image, platforms, rate, Genres,email } = req.body;
 
 
-    GameModel.findByIdAndUpdate(id, { name, description, rate, email, platform }, (err, result) => {
+    GameModel.findByIdAndUpdate(id, { name, image, platforms, rate, Genres,email }, (err, result) => {
         if (err) {
             console.log(err);
         } else {
