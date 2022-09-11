@@ -6,14 +6,14 @@ const cors = require('cors');
 const server = express();
 server.use(express.json());
 server.use(cors());
-const axios=require("axios");
+const axios = require("axios");
 
 const PORT = process.env.PORT || 3001;
 const mongoose = require('mongoose');
 
 
 
-mongoose.connect('mongodb://abdallah:0000@ac-1odpauc-shard-00-00.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-01.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-02.acyygth.mongodb.net:27017/?ssl=true&replicaSet=atlas-mp85cf-shard-0&authSource=admin&retryWrites=true&w=majority', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect('mongodb://abdallah:0000@ac-1odpauc-shard-00-00.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-01.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-02.acyygth.mongodb.net:27017/?ssl=true&replicaSet=atlas-mp85cf-shard-0&authSource=admin&retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
 
 // schema for Games
 const GameSchema = new mongoose.Schema({
@@ -23,7 +23,7 @@ const GameSchema = new mongoose.Schema({
     email: String,
     platform: String
 });
-const Game = mongoose.model('Game', GameSchema);
+const GameModel = mongoose.model('Game', GameSchema);
 
 
 //Routes
@@ -31,12 +31,18 @@ const Game = mongoose.model('Game', GameSchema);
 server.get("/", (req, res) => {
     res.send("hello,you are in home route")
 })
+
+
+
 //GameRoute
 //http://localhost:3000/games
 server.get("/games", gamesHandler);
+
+
+
 //  just  for test database
 async function seedData() {
-    const test = new Game({
+    const test = new GameModel({
         name: "GTA",
         description:
             "A literary sensation and runaway bestseller, this brilliant novel presents with seamless authenticity and exquisite lyricism the true confessions of one of Japan's most celebrated geisha.",
@@ -51,13 +57,15 @@ async function seedData() {
 
 //function 
 async function gamesHandler(req, res) {
-    let url = "https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a";
-    Game.find({}, (err, result) => {
+    // let search =req.query.search
+    let parent_platforms=req.query.parent_platforms;
+    let url = `https://api.rawg.io/api/games?parent_platforms=${parent_platforms}&key=43fd5749eb674151bca70973fe88b05a`;
+    GameModel.find({}, (err, result) => {
         if (err) {
             console.log(err)
         }
         else {
-   
+
             axios
                 .get(url)
                 .then((result) => {
@@ -95,86 +103,80 @@ class Games {
 // http://localhost:3000/games
 
 //post function ashar
-server.post ("/games",addHandler);
+server.post("/games", addHandler);
 
-async function addHandler(req,res) {
+async function addHandler(req, res) {
     console.log("test Add")
-    const {name,description,rate,email,platform} = req.body; 
-    await Game.create({
-    
-      name:name,
-         description:description,
-      rate:rate,
-      email:email,
-      platform:platform
+    const { name, description, rate, email, platform } = req.body;
+    await GameModel.create({
+
+        name: name,
+        description: description,
+        rate: rate,
+        email: email,
+        platform: platform
     });
-  
-    Game.find({},(err,result)=>{
-        if(err)
-        {
+
+    GameModel.find({}, (err, result) => {
+        if (err) {
             console.log("false")
             console.log(err);
         }
-        else
-        {
-          console.log(result)
+        else {
+            console.log(result)
             res.send(result);
         }
     })
-  }
+}
 
 
-  //delete function ashar
-  server.delete('/games/:id',deleteHandler);
- 
-  function deleteHandler(req,res) { 
+//delete function ashar
+server.delete('/games/:id', deleteHandler);
+
+function deleteHandler(req, res) {
     console.log("test delete ")
-  const gameId = req.params.id;
- 
-  Game.deleteOne({_id:gameId},(err,result)=>{
-      
-    Game.find({},(err,result)=>{ 
-          if(err)
-          {
-            console.log(err);
-          }
-          else
-          {
-             
-            res.send(result);
-          }
-      })
+    const gameId = req.params.id;
 
-  })
-  
+    GameModel.deleteOne({ _id: gameId }, (err, result) => {
+
+        GameModel.find({}, (err, result) => {
+            if (err) {
+                console.log(err);
+            }
+            else {
+
+                res.send(result);
+            }
+        })
+
+    })
+
 }
 
 
 //put function ashar
-server.put('/games/:id',updateHandler);
+server.put('/games/:id', updateHandler);
 
-function updateHandler(req, res){
+function updateHandler(req, res) {
     console.log("test update")
-  const id = req.params.id;
-  const {name,description,rate,email,platform} = req.body; 
+    const id = req.params.id;
+    const { name, description, rate, email, platform } = req.body;
 
 
-  Game.findByIdAndUpdate(id, {name,description,rate,email,platform}, (err, result) => {
-    if(err){
-      console.log(err);
-    } else {
-        Game.find({},(err,result)=>{ 
-        if(err)
-        {
+    GameModel.findByIdAndUpdate(id, { name, description, rate, email, platform }, (err, result) => {
+        if (err) {
             console.log(err);
-        }
-        else
-        {
-            res.send(result);
+        } else {
+            GameModel.find({}, (err, result) => {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    res.send(result);
+                }
+            })
         }
     })
-    }
-  })
 
 }
 
