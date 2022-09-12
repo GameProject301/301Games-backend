@@ -1,5 +1,4 @@
 "use strict";
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -7,38 +6,30 @@ const server = express();
 server.use(express.json());
 server.use(cors());
 const axios = require("axios");
-
 const PORT = process.env.PORT || 3001;
 const mongoose = require("mongoose");
-
 mongoose.connect(
   "mongodb://abdallah:0000@ac-1odpauc-shard-00-00.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-01.acyygth.mongodb.net:27017,ac-1odpauc-shard-00-02.acyygth.mongodb.net:27017/?ssl=true&replicaSet=atlas-mp85cf-shard-0&authSource=admin&retryWrites=true&w=majority",
   { useNewUrlParser: true, useUnifiedTopology: true }
 );
-
 // schema for Games
 const GameSchema = new mongoose.Schema({
   name: String,
   image: String,
-  platforms: String,
+  platforms: Array,
   metacritic: String,
-  Genres: String,
+  genres: Array,
   email: String,
 });
 const GameModel = mongoose.model("Game", GameSchema);
-
 //Routes
 //http://localhost:3000
 server.get("/", (req, res) => {
-
   res.send("hello,you are in home route");
 });
-
-
 //GameRoute
 //http://localhost:3000/games
 server.get("/games", gamesHandler);
-
 //  just  for test database
 async function seedData() {
   const test = new GameModel({
@@ -51,17 +42,13 @@ async function seedData() {
   });
   await test.save();
 }
-
 server.get("/recently", recentlyHandler);
-
 async function recentlyHandler(req, res) {
   console.log("hi recently");
-
   var today = new Date();
   let newN = today.toLocaleDateString("sv-SE");
   var lastMonth = new Date(new Date().setDate(today.getDate() - 30));
   let newMonth = lastMonth.toLocaleDateString("sv-SE");
-
   let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&dates=${newMonth},${newN}`;
   //   console.log(newN)
   //   console.log(newMonth)
@@ -84,12 +71,12 @@ async function recentlyHandler(req, res) {
     }
   });
 }
-server.get("/category", categoryHandler);
-async function categoryHandler(req, res) {
+server.get("/category", catHandler);
+async function catHandler(req, res) {
+  console.log("hi cat")
     let genres = req.query.genres;
     // https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=card
     let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=${genres}`;
-  
     GameModel.find({}, (err, result) => {
       if (err) {
         console.log(err);
@@ -98,7 +85,6 @@ async function categoryHandler(req, res) {
           .get(url)
           .then((result) => {
             let gamesArr = result.data.results.map((item) => {
-           
               return new Games(item);
             });
             res.status(200).send(gamesArr);
@@ -107,13 +93,25 @@ async function categoryHandler(req, res) {
             res.status(404).send(error);
           });
       }
-  
       // seedData();
     });
   }
+  server.get("/mylist", myListHandler);
+async function myListHandler(req, res) {
+  let email = req.query.email
+  console.log(email)
+  GameModel.find({email:email},(err,result) =>{
+   if(err){
+     console.log(err)
+   }
+   else
+   {
+    res.send(result)
+   }
+ })
+}
 //function
 server.get("/top", topHandler);
-
 async function topHandler(req, res) {
   let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&metacritic=96,98`;
   //   console.log(newN)
@@ -126,13 +124,10 @@ async function topHandler(req, res) {
       axios
         .get(url)
         .then((result) => {
-            
-
           let gamesArr = [];
           for (let i = 0; i < 10; i++) {
             gamesArr.push(new Games(result.data.results[i]));
           }
-
           res.status(200).send(gamesArr);
         })
         .catch((error) => {
@@ -141,12 +136,9 @@ async function topHandler(req, res) {
     }
   });
 }
-
 async function gamesHandler(req, res) {
   let parent_platforms = req.query.parent_platforms;
-
   let url = `https://api.rawg.io/api/games?parent_platforms=${parent_platforms}&key=43fd5749eb674151bca70973fe88b05a`;
-
   GameModel.find({}, (err, result) => {
     if (err) {
       console.log(err);
@@ -164,51 +156,9 @@ async function gamesHandler(req, res) {
           res.status(404).send(error);
         });
     }
-
-
-server.get("/generate",generateHandler)
-
- async function generateHandler(req,res){
-  let page = req.query.page;
-
-let url = `https://api.rawg.io/api/games?page=${page}&key=43fd5749eb674151bca70973fe88b05a`;
-axios
-    .get(url)
-    .then((result) => {
-        let gamesArr = result.data.results.map((item) => {
-            new Games(item);
-            return new Games(item);
-        });
-        res.status(200).send(gamesArr);
-    })
-    .catch((error) => {
-        res.status(404).send(error);
-    });
+    // seedData();
+  });
 }
-
-
-
-
-
-
-
-
-
-
-class Generate{
-
-    constructor(item){
-       
-this.name= item.name;
-
-    }
-}
-
-
-
-
-
-
 //classGames
 class Games {
   constructor(item) {
@@ -219,25 +169,21 @@ class Games {
     this.genres = item.genres.map((x) => x.name);
   }
 }
-
 // http://localhost:3000/games
-
 //post function ashar
 server.post("/games", addHandler);
-
 async function addHandler(req, res) {
   console.log("test Add");
-  const { name, image, platforms, metacritic, Genres, email } = req.body;
+  const { name, image, platforms, metacritic, genres, email } = req.body;
   await GameModel.create({
     name: name,
     image: image,
     platforms: platforms,
     metacritic: metacritic,
-    Genres: Genres,
-    email: email,
+    genres: genres,
+    email: email
   });
-
-  GameModel.find({}, (err, result) => {
+  GameModel.find({email}, (err, result) => {
     if (err) {
       console.log("false");
       console.log(err);
@@ -247,36 +193,34 @@ async function addHandler(req, res) {
     }
   });
 }
-
 //delete function ashar
 server.delete("/games/:id", deleteHandler);
-
 function deleteHandler(req, res) {
   console.log("test delete ");
   const gameId = req.params.id;
-
-  GameModel.deleteOne({ _id: gameId }, (err, result) => {
-    GameModel.find({}, (err, result) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.send(result);
-      }
-    });
-  });
+  const email = req.query.email
+  GameModel.deleteOne({_id:gameId},(err,result)=>{
+    GameModel.find({email},(err,result)=>{
+          if(err)
+          {
+              console.log(err);
+          }
+          else
+          {
+              res.send(result);
+          }
+      })
+  })
 }
-
 //put function ashar
 server.put("/games/:id", updateHandler);
-
 function updateHandler(req, res) {
   console.log("test update");
   const id = req.params.id;
-  const { name, image, platforms, metacritic, Genres, email } = req.body;
-
+  const { name, image, platforms, metacritic, genres, email } = req.body;
   GameModel.findByIdAndUpdate(
     id,
-    { name, image, platforms, metacritic, Genres, email },
+    { name, image, platforms, metacritic, genres, email },
     (err, result) => {
       if (err) {
         console.log(err);
@@ -292,9 +236,7 @@ function updateHandler(req, res) {
     }
   );
 }
-
 server.get("*", (req, res) => {
   res.send("Error 404:page not found ");
 });
-
 server.listen(PORT, () => console.log(`listening on ${PORT}`));
