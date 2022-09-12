@@ -31,7 +31,7 @@ const GameModel = mongoose.model('Game', GameSchema);
 server.get("/", (req, res) => {
     res.send("hello,you are in home route")
 })
-//generate 
+///generate 
 
 
 
