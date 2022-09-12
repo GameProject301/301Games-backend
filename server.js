@@ -20,12 +20,16 @@ mongoose.connect(
 const GameSchema = new mongoose.Schema({
   name: String,
   image: String,
-  platforms: String,
+  platforms: Array,
   metacritic: String,
-  Genres: String,
+  genres: Array,
   email: String,
 });
+
+
 const GameModel = mongoose.model("Game", GameSchema);
+
+
 
 //Routes
 //http://localhost:3000
@@ -82,8 +86,9 @@ async function recentlyHandler(req, res) {
     }
   });
 }
-server.get("/category", categoryHandler);
-async function categoryHandler(req, res) {
+server.get("/category", catHandler);
+async function catHandler(req, res) {
+  console.log("hi cat")
     let genres = req.query.genres;
     // https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=card
     let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=${genres}`;
@@ -109,6 +114,21 @@ async function categoryHandler(req, res) {
       // seedData();
     });
   }
+  server.get("/mylist", myListHandler);
+
+async function myListHandler(req, res) {
+  let email = req.query.email
+  console.log(email)
+  GameModel.find({email:email},(err,result) =>{
+   if(err){
+     console.log(err)
+   }
+   else 
+   {
+    res.send(result)
+   }
+ })
+}
 //function
 server.get("/top", topHandler);
 
@@ -183,19 +203,20 @@ class Games {
 //post function ashar
 server.post("/games", addHandler);
 
+
 async function addHandler(req, res) {
   console.log("test Add");
-  const { name, image, platforms, metacritic, Genres, email } = req.body;
+  const { name, image, platforms, metacritic, genres, email } = req.body;
   await GameModel.create({
     name: name,
     image: image,
     platforms: platforms,
     metacritic: metacritic,
-    Genres: Genres,
-    email: email,
+    genres: genres,
+    email: email
   });
 
-  GameModel.find({}, (err, result) => {
+  GameModel.find({email}, (err, result) => {
     if (err) {
       console.log("false");
       console.log(err);
@@ -212,16 +233,19 @@ server.delete("/games/:id", deleteHandler);
 function deleteHandler(req, res) {
   console.log("test delete ");
   const gameId = req.params.id;
-
-  GameModel.deleteOne({ _id: gameId }, (err, result) => {
-    GameModel.find({}, (err, result) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.send(result);
-      }
-    });
-  });
+  const email = req.query.email
+  GameModel.deleteOne({_id:gameId},(err,result)=>{
+    GameModel.find({email},(err,result)=>{
+          if(err)
+          {
+              console.log(err);
+          }
+          else
+          {
+              res.send(result);
+          }
+      })
+  })
 }
 
 //put function ashar
@@ -230,11 +254,11 @@ server.put("/games/:id", updateHandler);
 function updateHandler(req, res) {
   console.log("test update");
   const id = req.params.id;
-  const { name, image, platforms, metacritic, Genres, email } = req.body;
+  const { name, image, platforms, metacritic, genres, email } = req.body;
 
   GameModel.findByIdAndUpdate(
     id,
-    { name, image, platforms, metacritic, Genres, email },
+    { name, image, platforms, metacritic, genres, email },
     (err, result) => {
       if (err) {
         console.log(err);
