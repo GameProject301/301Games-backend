@@ -31,6 +31,7 @@ const GameModel = mongoose.model('Game', GameSchema);
 server.get("/", (req, res) => {
     res.send("hello,you are in home route")
 })
+//generate 
 
 
 
@@ -87,6 +88,48 @@ async function gamesHandler(req, res) {
     }
     )
 }
+
+
+server.get("/generate",generateHandler)
+
+ async function generateHandler(req,res){
+  let page = req.query.page;
+
+let url = `https://api.rawg.io/api/games?page=${page}&key=43fd5749eb674151bca70973fe88b05a`;
+axios
+    .get(url)
+    .then((result) => {
+        let gamesArr = result.data.results.map((item) => {
+            new Games(item);
+            return new Games(item);
+        });
+        res.status(200).send(gamesArr);
+    })
+    .catch((error) => {
+        res.status(404).send(error);
+    });
+}
+
+
+
+
+
+
+
+
+
+
+class Generate{
+
+    constructor(item){
+       
+this.name= item.name;
+
+    }
+}
+
+
+
 
 
 
