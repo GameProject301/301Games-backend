@@ -71,6 +71,27 @@ async function recentlyHandler(req, res) {
     }
   });
 }
+
+
+server.get("/generate",generateHandler)
+
+ async function generateHandler(req,res){
+  let page = req.query.page;
+let url = `https://api.rawg.io/api/games?page=${page}&key=43fd5749eb674151bca70973fe88b05a`;
+axios
+    .get(url)
+    .then((result) => {
+        let gamesArr = result.data.results.map((item) => {
+            new Games(item);
+            return new Games(item);
+        });
+        res.status(200).send(gamesArr);
+    })
+    .catch((error) => {
+        res.status(404).send(error);
+    });
+}
+
 server.get("/category", catHandler);
 async function catHandler(req, res) {
   console.log("hi cat")
@@ -114,9 +135,6 @@ async function myListHandler(req, res) {
 server.get("/top", topHandler);
 async function topHandler(req, res) {
   let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&metacritic=96,98`;
-  //   console.log(newN)
-  //   console.log(newMonth)
-  //   console.log(url)
   GameModel.find({}, (err, result) => {
     if (err) {
       console.log(err);
@@ -169,8 +187,6 @@ class Games {
     this.genres = item.genres.map((x) => x.name);
   }
 }
-// http://localhost:3000/games
-//post function ashar
 server.post("/games", addHandler);
 async function addHandler(req, res) {
   console.log("test Add");
