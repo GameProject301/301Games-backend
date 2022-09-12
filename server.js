@@ -29,7 +29,7 @@ const GameModel = mongoose.model('Game', GameSchema);
 //Routes
 //http://localhost:3000
 server.get("/", (req, res) => {
-    res.send("hello,you are in home route")
+    res.send("hello,you are in home route");
 });
  
 
