@@ -26,16 +26,57 @@ const GameSchema = new mongoose.Schema({
   email: String,
 });
 
-
 const GameModel = mongoose.model("Game", GameSchema);
 
+const interestedSchema = new mongoose.Schema({
+  email: String,
+  interested: Array,
+});
 
+const interestedModel = mongoose.model("interested", interestedSchema);
 
 //Routes
 //http://localhost:3000
 server.get("/", (req, res) => {
   res.send("hello,you are in home route");
 });
+// ================
+
+server.post("/interested", interestedHandler);
+async function interestedHandler(req, res) {
+  console.log("hi interested");
+
+  const { email, interested } = req.body;
+  await interestedModel.create({
+    email: email,
+    interested: interested,
+  });
+
+  interestedModel.find({ email }, (err, result) => {
+    if (err) {
+      console.log("false");
+      console.log(err);
+    } else {
+      console.log(result);
+      res.send(result);
+    }
+  });
+}
+server.get("/interested", interestedHlyHandler);
+
+async function interestedHlyHandler(req, res) {
+  console.log("hi interestedModel");
+
+  let email = req.query.email;
+  console.log(email);
+  interestedModel.find({ email: email }, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.send(result);
+    }
+  });
+}
 
 //GameRoute
 //http://localhost:3000/games
@@ -88,46 +129,62 @@ async function recentlyHandler(req, res) {
 }
 server.get("/category", catHandler);
 async function catHandler(req, res) {
-  console.log("hi cat")
-    let genres = req.query.genres;
-    // https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=card
-    let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=${genres}`;
-  
-    GameModel.find({}, (err, result) => {
-      if (err) {
-        console.log(err);
-      } else {
-        axios
-          .get(url)
-          .then((result) => {
-            let gamesArr = result.data.results.map((item) => {
-           
-              return new Games(item);
-            });
-            res.status(200).send(gamesArr);
-          })
-          .catch((error) => {
-            res.status(404).send(error);
+  console.log("hi cat");
+  let genres = req.query.genres;
+  // https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=card
+  let url = `https://api.rawg.io/api/games?key=43fd5749eb674151bca70973fe88b05a&genres=${genres}`;
+
+  GameModel.find({}, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      axios
+        .get(url)
+        .then((result) => {
+          let gamesArr = result.data.results.map((item) => {
+            return new Games(item);
           });
-      }
-  
-      // seedData();
+          res.status(200).send(gamesArr);
+        })
+        .catch((error) => {
+          res.status(404).send(error);
+        });
+    }
+
+    // seedData();
+  });
+}
+
+server.get("/generate", generateHandler);
+async function generateHandler(req, res) {
+  let page = req.query.page;
+  let url = `https://api.rawg.io/api/games?page=${page}&key=43fd5749eb674151bca70973fe88b05a`;
+  axios
+    .get(url)
+    .then((result) => {
+      let gamesArr = result.data.results.map((item) => {
+        new Games(item);
+        return new Games(item);
+      });
+      res.status(200).send(gamesArr);
+    })
+    .catch((error) => {
+      res.status(404).send(error);
     });
-  }
-  server.get("/mylist", myListHandler);
+}
+
+server.get("/mylist", myListHandler);
 
 async function myListHandler(req, res) {
-  let email = req.query.email
-  console.log(email)
-  GameModel.find({email:email},(err,result) =>{
-   if(err){
-     console.log(err)
-   }
-   else 
-   {
-    res.send(result)
-   }
- })
+  let email = req.query.email;
+  console.log(email);
+  GameModel.find({ email: email }, (err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.send(result);
+    }
+  });
 }
 //function
 server.get("/top", topHandler);
@@ -144,8 +201,6 @@ async function topHandler(req, res) {
       axios
         .get(url)
         .then((result) => {
-            
-
           let gamesArr = [];
           for (let i = 0; i < 10; i++) {
             gamesArr.push(new Games(result.data.results[i]));
@@ -203,7 +258,6 @@ class Games {
 //post function ashar
 server.post("/games", addHandler);
 
-
 async function addHandler(req, res) {
   console.log("test Add");
   const { name, image, platforms, metacritic, genres, email } = req.body;
@@ -213,10 +267,10 @@ async function addHandler(req, res) {
     platforms: platforms,
     metacritic: metacritic,
     genres: genres,
-    email: email
+    email: email,
   });
 
-  GameModel.find({email}, (err, result) => {
+  GameModel.find({ email }, (err, result) => {
     if (err) {
       console.log("false");
       console.log(err);
@@ -233,19 +287,16 @@ server.delete("/games/:id", deleteHandler);
 function deleteHandler(req, res) {
   console.log("test delete ");
   const gameId = req.params.id;
-  const email = req.query.email
-  GameModel.deleteOne({_id:gameId},(err,result)=>{
-    GameModel.find({email},(err,result)=>{
-          if(err)
-          {
-              console.log(err);
-          }
-          else
-          {
-              res.send(result);
-          }
-      })
-  })
+  const email = req.query.email;
+  GameModel.deleteOne({ _id: gameId }, (err, result) => {
+    GameModel.find({ email }, (err, result) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.send(result);
+      }
+    });
+  });
 }
 
 //put function ashar
