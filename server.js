@@ -73,11 +73,12 @@ async function interestedHlyHandler(req, res) {
     if (err) {
       console.log(err);
     } else {
+      console.log(result)
       res.send(result);
     }
   });
 }
-
+// dd
 //GameRoute
 //http://localhost:3000/games
 server.get("/games", gamesHandler);
@@ -281,7 +282,23 @@ async function addHandler(req, res) {
   });
 }
 
-//delete function ashar
+//delete function
+server.delete("/interested/:id", interestedDelete);
+
+function interestedDelete(req, res) {
+  console.log("test delete ");
+  const interestedID = req.params.id;
+  const email = req.query.email;
+  interestedModel.deleteOne({ _id: interestedID }, (err, result) => {
+    interestedModel.find({ email }, (err, result) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.send(result);
+      }
+    });
+  });
+}
 server.delete("/games/:id", deleteHandler);
 
 function deleteHandler(req, res) {
@@ -299,22 +316,22 @@ function deleteHandler(req, res) {
   });
 }
 
-//put function ashar
-server.put("/games/:id", updateHandler);
+//put function
+server.put("/interested/:id", updateHandler);
 
 function updateHandler(req, res) {
   console.log("test update");
   const id = req.params.id;
-  const { name, image, platforms, metacritic, genres, email } = req.body;
+  const { email, interested } = req.body;
 
-  GameModel.findByIdAndUpdate(
+  interestedModel.findByIdAndUpdate(
     id,
-    { name, image, platforms, metacritic, genres, email },
+    { email, interested },
     (err, result) => {
       if (err) {
         console.log(err);
       } else {
-        GameModel.find({}, (err, result) => {
+        interestedModel.find({ email }, (err, result) => {
           if (err) {
             console.log(err);
           } else {
